@@ -40,7 +40,7 @@ class Running extends Workout{
     super(coords, distance, duration)
     this.cadence = cadence;
     this.calculatePace();
-    this._setDescription()  // FIXED: Added parentheses to call function
+    this._setDescription()
   }
 
   calculatePace(){
@@ -69,13 +69,11 @@ class Cycling extends Workout{
 class App {
   #map;
   #mapEvent;
-  #mapZoomLevel;
   #workouts = [];
-
-
+  
   constructor(){
     this._getPosition();
-
+    
     // Event Listeners
     form.addEventListener('submit', this._newWorkOut.bind(this));
     inputType.addEventListener('change', this._toggleElevationField.bind(this));
@@ -110,6 +108,11 @@ class App {
     
     // Leaflet On Click Handler Function
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workouts.forEach(work =>{
+      this._renderWorkout(work)
+    });
+    
   }
   
   _showForm(mapEv){
@@ -120,16 +123,24 @@ class App {
   }
 
   _hideForm(){
+    // Clear all input fields - THIS NOW CLEARS ALL FIELDS
     inputDistance.value = '';
     inputDuration.value = '';
     inputElevation.value = '';
     inputCadence.value = '';
-    form.style.display = 'none'
+    
+    // Hide form with animation
+    form.style.display = 'none';
     form.classList.add('hidden');
-    setTimeout(()=> (form.style.display = 'grid'), 1000 )
+    setTimeout(() => (form.style.display = 'grid'), 1000);
   }
 
   _toggleElevationField(){
+    // Clear BOTH fields every time we toggle
+    inputElevation.value = '';
+    inputCadence.value = '';
+    
+    // Then toggle visibility
     inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
   }
@@ -154,6 +165,7 @@ class App {
     if (type === 'running'){
       const cadence = Number(inputCadence.value)
 
+      // FIXED: Only validate the fields that are visible for running
       if(!validateInputs(distance, duration, cadence) || !checkNegativeNums(distance, duration, cadence)){
         return alert('Use a Positive and Valid Number')
       }
@@ -166,6 +178,7 @@ class App {
     if(type === 'cycling'){
       const elevation = Number(inputElevation.value)
 
+      // FIXED: Only validate distance and duration for positive (elevation can be negative for downhill)
       if(!validateInputs(distance, duration, elevation) || !checkNegativeNums(distance, duration)){
         return alert('Use a Positive and Valid Number')
       }
@@ -245,7 +258,7 @@ class App {
     
     form.insertAdjacentHTML('afterend', html)
   }
-
+  
   _moveMarker(e){
     const workoutElement = e.target.closest('.workout')
     if(!workoutElement) return;
@@ -260,6 +273,25 @@ class App {
     })
   }
 
+  _setLocalStorage(){
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts))
+  }
+
+
+
+  _getLocalStorage(){
+    const data = JSON.parse(localStorage.getItem('workouts'))
+  
+    if(data){
+      this.#workouts = data;
+  
+      this.#workouts.forEach(work =>{
+        this._renderWorkout(work)
+      });
+    }
+   
+  
+  }
 
 }
 
